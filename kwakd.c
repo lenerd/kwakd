@@ -58,6 +58,7 @@ static void help( void )
     printf( "  Serve a blank html page for any request\n\n" );
     printf( "  -b, --background     background mode (disables console output, and allows\n" );
     printf( "                       multiple requests to be served simultaneously)\n" );
+    printf( "  -a, --address        address to bind on, defaults to 0.0.0.0\n" );
     printf( "  -p, --port           port to listen for requests on, defaults to 8000\n" );
     printf( "  -v, --verbose        verbose output\n" );
     printf( "  -q, --quiet          suppress any output\n" );
@@ -79,6 +80,7 @@ int main( int argc, char *argv[] )
     int sin_size;
     int newfd;
     int i, fr, rv;
+    char* address = "0.0.0.0";
 
     /* Parse options */
     for( i = 1; i < argc; i++ )
@@ -92,6 +94,11 @@ int main( int argc, char *argv[] )
 	{
 	    help(  );
 	    exit( 0 );
+	}
+	else if( ( strcmp( argv[i], "-a" ) == 0 ) || ( strcmp( argv[i], "--address" ) == 0 ) )
+	{
+		address = argv[i + 1];
+		i++;
 	}
 	else if( ( strcmp( argv[i], "-p" ) == 0 ) || ( strcmp( argv[i], "--port" ) == 0 ) )
 	{
@@ -150,7 +157,8 @@ int main( int argc, char *argv[] )
 
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons( port );
-    my_addr.sin_addr.s_addr = INADDR_ANY;
+    if ( inet_aton(address, &my_addr.sin_addr) == 0 )
+        logmessage( PANIC, "Couldn't parse address." );
     bzero( &( my_addr.sin_zero ), 8 );
 
     if( bind( sockfd, ( struct sockaddr * ) &my_addr, sizeof( struct sockaddr ) ) == -1 )
